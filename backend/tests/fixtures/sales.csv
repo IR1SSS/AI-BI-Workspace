@@ -1,0 +1,5 @@
+order_date,region,product,sales_amount,quantity
+2026-01-01,East,Notebook,1200,3
+2026-01-02,West,Monitor,900,2
+2026-01-03,East,Keyboard,150,5
+2026-01-04,North,Notebook,800,2
