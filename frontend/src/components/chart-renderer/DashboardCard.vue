@@ -1,5 +1,19 @@
 <template>
   <article class="dashboard-card" :class="[card.type, sizeClass]">
+    <button
+      v-if="canShowSql"
+      class="sql-toggle"
+      type="button"
+      :aria-expanded="isSqlOpen"
+      aria-label="Show chart SQL"
+      title="Show chart SQL"
+      @click="isSqlOpen = !isSqlOpen"
+    >
+      SQL
+    </button>
+    <div v-if="canShowSql && isSqlOpen" class="sql-popover" role="dialog" aria-label="Chart SQL">
+      <pre>{{ sqlText }}</pre>
+    </div>
     <span class="card-type">{{ card.type }}</span>
     <h3>{{ card.title }}</h3>
     <strong v-if="card.type === 'metric'">{{ compactMetric }}</strong>
@@ -52,9 +66,12 @@ use([
 const props = defineProps<{ card: Card }>()
 
 const chartElement = ref<HTMLDivElement | null>(null)
+const isSqlOpen = ref(false)
 let chart: ECharts | null = null
 
 const hasData = computed(() => Boolean(props.card.data && props.card.data.length > 0))
+const sqlText = computed(() => props.card.sql?.trim() ?? '')
+const canShowSql = computed(() => props.card.type === 'chart' && sqlText.value.length > 0)
 
 const compactNumber = (value: number | string | undefined) => {
   const numeric = Number(value)
@@ -85,6 +102,10 @@ const truncateLabel = (value: string | number | undefined, maxLength = 8) => {
 const labelFormatter = (maxLength = 8) => (value: string | number) => truncateLabel(value, maxLength)
 
 const buildOption = (): EChartsCoreOption => {
+  if (props.card.echarts_option && Array.isArray((props.card.echarts_option as any).series)) {
+    return props.card.echarts_option as EChartsCoreOption
+  }
+
   const data = props.card.data ?? []
   if (props.card.chart_type === 'pie') {
     return {
@@ -309,6 +330,9 @@ const resizeChart = () => {
 }
 
 watch(() => props.card, renderChart, { deep: true })
+watch(() => props.card.id, () => {
+  isSqlOpen.value = false
+})
 
 onMounted(() => {
   renderChart()
@@ -324,23 +348,80 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .dashboard-card {
+  position: relative;
   min-height: 278px;
   padding: 16px;
   overflow: hidden;
-  background: #ffffff;
-  border: 1px solid #f1f5f9;
+  background: var(--tr-surface);
+  border: 1px solid var(--tr-border);
+  border-radius: 8px;
+  box-shadow: var(--tr-shadow);
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.dashboard-card.chart:hover {
+  border-color: #bfdbfe;
+  box-shadow: var(--tr-shadow-lg);
+  transform: translateY(-1px);
+}
+
+.sql-toggle {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  min-width: 38px;
+  min-height: 24px;
+  padding: 3px 7px;
+  color: #1d4ed8;
+  cursor: pointer;
+  background: var(--tr-blue-soft);
+  border: 1px solid #bfdbfe;
   border-radius: 6px;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.sql-toggle:hover,
+.sql-toggle[aria-expanded="true"] {
+  color: #ffffff;
+  background: var(--tr-blue);
+  border-color: var(--tr-blue);
+}
+
+.sql-popover {
+  position: absolute;
+  top: 42px;
+  right: 12px;
+  z-index: 5;
+  width: min(420px, calc(100% - 24px));
+  max-height: 190px;
+  overflow: auto;
+  padding: 10px;
+  background: #122033;
+  border: 1px solid #223854;
+  border-radius: 6px;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.24);
+}
+
+.sql-popover pre {
+  margin: 0;
+  color: #d7e8ff;
+  font-size: 11px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .dashboard-card.metric {
-  min-height: 58px;
-  padding: 8px 10px;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  min-height: 84px;
+  padding: 14px;
+  background: var(--tr-surface);
 }
 
 .dashboard-card.chart {
-  border-color: #f1f5f9;
+  border-color: var(--tr-border);
 }
 
 .dashboard-card.text {
@@ -375,31 +456,38 @@ onBeforeUnmount(() => {
 
 .dashboard-card h3 {
   margin: 8px 0 12px;
-  color: #172433;
+  color: var(--tr-text);
   font-size: 15px;
+  font-weight: 700;
   line-height: 1.35;
 }
 
 .dashboard-card strong {
-  color: #10243e;
-  font-size: 32px;
+  color: var(--tr-text);
+  font-size: 30px;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
 
 .dashboard-card.metric h3 {
-  margin: 2px 0 3px;
+  margin: 6px 0 5px;
+  color: var(--tr-text-muted);
   font-size: 11px;
-  line-height: 1.2;
+  font-weight: 600;
+  line-height: 1.25;
 }
 
 .dashboard-card.metric strong {
-  font-size: 19px;
-  line-height: 1.15;
+  font-size: 24px;
+  line-height: 1.1;
 }
 
 .card-type {
-  font-size: 12px;
-  color: #627187;
+  color: var(--tr-text-soft);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -414,7 +502,7 @@ onBeforeUnmount(() => {
 
 .empty-chart {
   margin: 18px 0 0;
-  color: #627187;
+  color: var(--tr-text-muted);
 }
 
 .text-list {
@@ -429,7 +517,7 @@ onBeforeUnmount(() => {
   display: grid;
   gap: 3px;
   padding-top: 8px;
-  border-top: 1px solid #e6ebf0;
+  border-top: 1px solid var(--tr-border);
 }
 
 .text-list b {

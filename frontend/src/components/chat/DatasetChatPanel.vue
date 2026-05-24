@@ -15,9 +15,9 @@
         </div>
         <h3>智能问数助手</h3>
         <p>{{ emptyStateText }}</p>
-        <div v-if="!isHistoryLoading && suggestedQuestions.length > 0" class="suggestions">
+        <div v-if="!isHistoryLoading && emptyStateSuggestions.length > 0" class="suggestions">
           <button
-            v-for="suggestion in suggestedQuestions"
+            v-for="suggestion in emptyStateSuggestions"
             :key="suggestion"
             class="suggestion-chip"
             type="button"
@@ -90,6 +90,11 @@ const props = defineProps<{
 
 const conversations = reactive<Record<string, DatasetChatMessage[]>>({})
 const suggestionCache = reactive<Record<string, string[]>>({})
+const defaultSuggestions = [
+  '💡 Which region has the highest productivity?',
+  '📈 What changed most in 2026?',
+  '🔎 Which metric looks abnormal?'
+]
 const question = ref('')
 const isLoading = ref(false)
 const isHistoryLoading = ref(false)
@@ -103,6 +108,9 @@ const markdown = new MarkdownIt({
 const conversationKey = computed(() => `${props.datasetId}:${props.versionId}`)
 const activeMessages = computed(() => conversations[conversationKey.value] ?? [])
 const suggestedQuestions = computed(() => suggestionCache[conversationKey.value] ?? [])
+const emptyStateSuggestions = computed(() =>
+  suggestedQuestions.value.length > 0 ? suggestedQuestions.value : defaultSuggestions
+)
 const emptyStateText = computed(() => {
   if (isHistoryLoading.value) {
     return '正在加载对话'
@@ -229,8 +237,8 @@ defineExpose({ clearHistory })
   min-height: 0;
   overflow: hidden;
   grid-template-rows: auto 1fr auto;
-  background: #ffffff;
-  border-left: 1px solid #dfe4ea;
+  background: var(--tr-surface);
+  border-left: 1px solid var(--tr-border);
 }
 
 .chat-header {
@@ -239,11 +247,11 @@ defineExpose({ clearHistory })
   justify-content: space-between;
   gap: 14px;
   padding: 18px 18px 16px;
-  border-bottom: 1px solid #e6ebf0;
+  border-bottom: 1px solid var(--tr-border);
 }
 
 .eyebrow {
-  color: #647386;
+  color: var(--tr-blue);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0;
@@ -254,7 +262,7 @@ defineExpose({ clearHistory })
   max-width: 260px;
   margin: 5px 0 0;
   overflow-wrap: anywhere;
-  color: #1a2633;
+  color: var(--tr-text);
   font-size: 15px;
   line-height: 1.35;
 }
@@ -266,7 +274,7 @@ defineExpose({ clearHistory })
   gap: 12px;
   padding: 16px;
   overflow-y: auto;
-  background: #f8fafc;
+  background: #f9fafb;
 }
 
 .empty-chat {
@@ -287,7 +295,7 @@ defineExpose({ clearHistory })
   margin-bottom: 2px;
   background:
     radial-gradient(circle at 50% 50%, #ffffff 0 42%, transparent 43%),
-    conic-gradient(from 140deg, #10b981, #60a5fa, #93c5fd, #10b981);
+    conic-gradient(from 140deg, var(--tr-blue), #60a5fa, #93c5fd, var(--tr-blue));
   border-radius: 999px;
   box-shadow: 0 10px 28px rgba(35, 87, 198, 0.14);
 }
@@ -297,9 +305,9 @@ defineExpose({ clearHistory })
   width: 42px;
   height: 42px;
   place-items: center;
-  color: #047857;
-  background: #ecfdf5;
-  border: 1px solid #bbf7d0;
+  color: #1d4ed8;
+  background: var(--tr-blue-soft);
+  border: 1px solid #bfdbfe;
   border-radius: 999px;
   font-size: 13px;
   font-weight: 900;
@@ -307,7 +315,7 @@ defineExpose({ clearHistory })
 
 .empty-chat h3 {
   margin: 4px 0 0;
-  color: #122033;
+  color: var(--tr-text);
   font-size: 18px;
   line-height: 1.3;
 }
@@ -315,7 +323,7 @@ defineExpose({ clearHistory })
 .empty-chat p {
   max-width: 270px;
   margin: 0;
-  color: #637386;
+  color: var(--tr-text-muted);
   font-size: 13px;
   line-height: 1.6;
 }
@@ -330,12 +338,12 @@ defineExpose({ clearHistory })
 
 .suggestion-chip {
   padding: 9px 12px;
-  color: #23405f;
+  color: var(--tr-text);
   text-align: left;
   cursor: pointer;
-  background: #f3f8ff;
-  border: 1px solid #dbeafe;
-  border-radius: 999px;
+  background: var(--tr-surface);
+  border: 1px solid var(--tr-border);
+  border-radius: 8px;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
   transition:
     transform 180ms ease,
@@ -345,25 +353,25 @@ defineExpose({ clearHistory })
 }
 
 .suggestion-chip:hover {
-  background: #f0fdf4;
-  border-color: #86efac;
-  box-shadow: 0 9px 18px rgba(16, 185, 129, 0.12);
+  background: var(--tr-blue-soft);
+  border-color: #bfdbfe;
+  box-shadow: 0 9px 18px rgba(37, 99, 235, 0.1);
   transform: translateY(-2px);
 }
 
 .message {
   max-width: 92%;
   padding: 12px 13px;
-  background: #ffffff;
-  border: 1px solid #dfe5ec;
+  background: var(--tr-surface);
+  border: 1px solid var(--tr-border);
   border-radius: 8px;
 }
 
 .message.user {
   align-self: flex-end;
   color: #ffffff;
-  background: #2357c6;
-  border-color: #2357c6;
+  background: var(--tr-blue);
+  border-color: var(--tr-blue);
 }
 
 .message.assistant {
@@ -385,7 +393,7 @@ defineExpose({ clearHistory })
 }
 
 .markdown-body {
-  color: #1f2f3f;
+  color: #374151;
   font-size: 14px;
   line-height: 1.6;
 }
@@ -418,12 +426,12 @@ defineExpose({ clearHistory })
 }
 
 .markdown-body :deep(strong) {
-  color: #142236;
+  color: var(--tr-text);
   font-weight: 800;
 }
 
 .markdown-body :deep(a) {
-  color: #2357c6;
+  color: var(--tr-blue);
   font-weight: 700;
   text-decoration: none;
 }
@@ -434,8 +442,8 @@ defineExpose({ clearHistory })
 
 .markdown-body :deep(code) {
   padding: 2px 5px;
-  color: #1f3657;
-  background: #e9f0fb;
+  color: #1d4ed8;
+  background: var(--tr-blue-soft);
   border-radius: 4px;
   font-size: 12px;
 }
@@ -445,7 +453,7 @@ defineExpose({ clearHistory })
   overflow-x: auto;
   padding: 10px;
   color: #d7e8ff;
-  background: #122033;
+  background: #111827;
   border-radius: 6px;
 }
 
@@ -474,7 +482,7 @@ defineExpose({ clearHistory })
 }
 
 .markdown-body :deep(th) {
-  background: #f1f5f9;
+  background: #f9fafb;
 }
 
 .sql-block {
@@ -493,7 +501,7 @@ defineExpose({ clearHistory })
   overflow-x: auto;
   padding: 10px;
   color: #d7e8ff;
-  background: #122033;
+  background: #111827;
   border-radius: 6px;
   font-size: 12px;
   line-height: 1.45;
@@ -501,24 +509,24 @@ defineExpose({ clearHistory })
 
 .composer {
   padding: 14px;
-  background: #ffffff;
-  border-top: 1px solid #e6ebf0;
+  background: var(--tr-surface);
+  border-top: 1px solid var(--tr-border);
 }
 
 .composer-box {
   position: relative;
   padding: 8px;
-  background: #f8fafc;
-  border: 1px solid #d9e4ef;
-  border-radius: 10px;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  background: #f9fafb;
+  border: 1px solid var(--tr-border);
+  border-radius: 8px;
+  box-shadow: var(--tr-shadow);
   transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
 }
 
 .composer-box:focus-within {
-  background: #ffffff;
-  border-color: #10b981;
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.22);
+  background: var(--tr-surface);
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
 .composer-box :deep(.el-textarea__inner) {

@@ -1,9 +1,9 @@
 import json
-import re
 from typing import Any
 
 from app.infrastructure.llm.agent_skills import AgentSkill
 from app.infrastructure.llm.llm_client import LLMMessage, OpenAICompatibleClient
+from app.infrastructure.visualization.echarts_spec_repair import EChartsSpecRepairer
 
 SUPPORTED_CHART_TYPES = {
     "area",
@@ -22,6 +22,7 @@ SUPPORTED_CHART_TYPES = {
 class AIAnalysisPlanner:
     def __init__(self) -> None:
         self.llm_client = OpenAICompatibleClient()
+        self.spec_repairer = EChartsSpecRepairer()
 
     async def plan(self, profile: dict[str, Any]) -> dict[str, Any]:
         try:
@@ -39,6 +40,8 @@ class AIAnalysisPlanner:
             "row_count": profile["row_count"],
             "column_count": profile["column_count"],
             "quality_issues": profile["quality_issues"],
+            "semantic_layer": profile.get("semantic_layer", {}),
+            "auxiliary_columns": profile.get("auxiliary_columns", []),
             "columns": [
                 {
                     "name": column["name"],
@@ -50,7 +53,7 @@ class AIAnalysisPlanner:
                     "is_datetime": column["is_datetime"],
                     "is_probable_index": column["is_probable_index"],
                 }
-                for column in profile["columns"]
+                for column in profile.get("analysis_columns", profile["columns"])
             ],
         }
         schema = {
@@ -136,16 +139,10 @@ class AIAnalysisPlanner:
         ]
 
     def _parse_json(self, content: str) -> dict[str, Any]:
-        stripped = content.strip()
-        if stripped.startswith("```"):
-            stripped = re.sub(r"^```(?:json)?", "", stripped).strip()
-            stripped = re.sub(r"```$", "", stripped).strip()
-
-        match = re.search(r"\{.*\}", stripped, re.DOTALL)
-        if not match:
+        repaired = self.spec_repairer.parse_json_like(content)
+        if not isinstance(repaired, dict):
             raise ValueError("LLM response did not contain a JSON object")
-
-        return json.loads(match.group(0))
+        return repaired
 
     def _normalize_plan(
         self, plan: dict[str, Any], profile: dict[str, Any], source: str

@@ -541,8 +541,8 @@ onMounted(async () => {
 .status-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.8fr);
-  gap: 18px;
-  margin-bottom: 18px;
+  gap: 14px;
+  margin-bottom: 14px;
 }
 
 .status-alert {
@@ -554,7 +554,7 @@ onMounted(async () => {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .llm-heading h2 {
@@ -563,7 +563,7 @@ onMounted(async () => {
 
 .health-detail {
   margin-left: 8px;
-  color: #637386;
+  color: var(--tr-text-muted);
   font-size: 12px;
 }
 
@@ -571,29 +571,29 @@ onMounted(async () => {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  color: #047857;
+  color: var(--tr-green);
   font-weight: 700;
 }
 
 .online-status i {
   width: 8px;
   height: 8px;
-  background: #10b981;
+  background: var(--tr-green);
   border-radius: 999px;
-  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.14);
+  box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.12);
 }
 
 .session-label {
-  color: #647386;
+  color: var(--tr-text-muted);
   font-size: 12px;
 }
 
 .import-history {
-  margin-bottom: 18px;
+  margin-bottom: 14px;
 }
 
 .profile-panel {
-  margin-top: 18px;
+  margin-top: 14px;
 }
 
 .pipeline-steps {
@@ -617,14 +617,14 @@ onMounted(async () => {
 }
 
 .pipeline-steps::before {
-  background: #dbe6ef;
+  background: var(--tr-border);
 }
 
 .pipeline-steps::after {
   width: var(--pipeline-progress);
   max-width: 78%;
-  background: linear-gradient(90deg, #10b981, #34d399);
-  box-shadow: 0 0 18px rgba(16, 185, 129, 0.24);
+  background: var(--tr-blue);
+  box-shadow: 0 0 18px rgba(37, 99, 235, 0.2);
 }
 
 .pipeline-step {
@@ -634,7 +634,7 @@ onMounted(async () => {
   justify-items: center;
   gap: 8px;
   min-width: 0;
-  color: #647386;
+  color: var(--tr-text-muted);
   font-size: 12px;
   font-weight: 800;
 }
@@ -644,28 +644,28 @@ onMounted(async () => {
   width: 34px;
   height: 34px;
   place-items: center;
-  color: #647386;
-  background: #f8fafc;
-  border: 1px solid #cbd5e1;
+  color: var(--tr-text-muted);
+  background: #f9fafb;
+  border: 1px solid var(--tr-border-strong);
   border-radius: 999px;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06);
+  box-shadow: var(--tr-shadow);
   transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
 }
 
 .pipeline-step.completed {
-  color: #047857;
+  color: var(--tr-blue);
 }
 
 .pipeline-step.completed .step-badge {
   color: #ffffff;
-  background: #10b981;
-  border-color: #10b981;
+  background: var(--tr-blue);
+  border-color: var(--tr-blue);
 }
 
 .pipeline-step.active .step-badge {
-  color: #047857;
-  background: #ecfdf5;
-  border-color: #10b981;
+  color: var(--tr-blue);
+  background: var(--tr-blue-soft);
+  border-color: #93c5fd;
   animation: pipeline-pulse 1.6s ease-in-out infinite;
 }
 
@@ -677,12 +677,12 @@ onMounted(async () => {
 @keyframes pipeline-pulse {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.28);
+    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.24);
     transform: translateY(0);
   }
 
   50% {
-    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+    box-shadow: 0 0 0 8px rgba(37, 99, 235, 0);
     transform: translateY(-1px);
   }
 }
@@ -696,7 +696,7 @@ onMounted(async () => {
 
 .data-preview-panel,
 .cleaning-panel {
-  margin-top: 18px;
+  margin-top: 14px;
 }
 
 .panel-heading {
@@ -714,7 +714,7 @@ onMounted(async () => {
 .panel-heading p,
 .panel-heading span {
   margin: 0;
-  color: #637386;
+  color: var(--tr-text-muted);
   font-size: 13px;
 }
 
@@ -736,7 +736,7 @@ onMounted(async () => {
 
 .preview-compare h3 {
   margin: 0 0 8px;
-  color: #263648;
+  color: var(--tr-text);
   font-size: 14px;
 }
 
@@ -747,7 +747,8 @@ h2 {
 
 code {
   padding: 2px 5px;
-  background: #eef1e8;
+  color: #1d4ed8;
+  background: var(--tr-blue-soft);
   border-radius: 4px;
 }
 

@@ -1,15 +1,26 @@
 import json
-import re
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
+from pydantic import BaseModel, Field
 
 from app.infrastructure.catalog.dataset_catalog import DatasetCatalog
 from app.infrastructure.chat.chat_history_store import ChatHistoryStore
 from app.infrastructure.llm.agent_skills import AgentSkill
 from app.infrastructure.llm.llm_client import LLMMessage, OpenAICompatibleClient
 from app.infrastructure.query.duckdb_query_engine import DuckDBQueryEngine
+from app.infrastructure.visualization.dashboard_generator import DashboardGenerator
+from app.infrastructure.visualization.echarts_spec_repair import EChartsSpecRepairer
+
+
+class ChatSessionState(BaseModel):
+    active_dataset_id: str
+    active_version_id: str
+    current_dashboard_spec: dict[str, Any] = Field(default_factory=dict)
+    executed_sql_history: list[str] = Field(default_factory=list)
+    semantic_layer: dict[str, Any] = Field(default_factory=dict)
+    auxiliary_columns: list[str] = Field(default_factory=list)
 
 
 class ChatBIService:
@@ -18,6 +29,8 @@ class ChatBIService:
         self.llm_client = OpenAICompatibleClient()
         self.query_engine = DuckDBQueryEngine()
         self.history_store = ChatHistoryStore()
+        self.spec_repairer = EChartsSpecRepairer()
+        self.dashboard_generator = DashboardGenerator()
 
     def history(self, dataset_id: str, version_id: str) -> list[dict[str, Any]]:
         self.catalog.get_dataset(dataset_id, version_id)
@@ -80,6 +93,8 @@ class ChatBIService:
         metadata = self.catalog.get_dataset(dataset_id, version_id)
         profile = self.catalog.get_profile(dataset_id, version_id)
         analysis = self.catalog.get_analysis(dataset_id, version_id)
+        dashboard = self.catalog.get_dashboard(dataset_id, version_id)
+        history = self.history_store.list_messages(dataset_id, version_id)
         sample = self._sample_rows(Path(metadata["parquet_path"]))
         columns = [
             {
@@ -90,15 +105,30 @@ class ChatBIService:
                 "unique_count": column["unique_count"],
                 "sample_values": column["sample_values"][:3],
             }
-            for column in profile["columns"]
+            for column in profile.get("analysis_columns", profile["columns"])
             if not column.get("is_probable_index")
         ]
+        session_state = ChatSessionState(
+            active_dataset_id=dataset_id,
+            active_version_id=version_id,
+            current_dashboard_spec=self._compact_dashboard(dashboard),
+            executed_sql_history=[
+                str(message.get("sql"))
+                for message in history
+                if message.get("role") == "assistant" and message.get("sql")
+            ][-8:],
+            semantic_layer=profile.get("semantic_layer", {}),
+            auxiliary_columns=[str(column) for column in profile.get("auxiliary_columns", [])],
+        )
         return {
             "metadata": metadata,
+            "session_state": session_state.model_dump(),
             "profile": {
                 "row_count": profile["row_count"],
                 "column_count": profile["column_count"],
                 "columns": columns,
+                "semantic_layer": profile.get("semantic_layer", {}),
+                "auxiliary_columns": profile.get("auxiliary_columns", []),
                 "quality_issues": profile.get("quality_issues", [])[:8],
             },
             "analysis": {
@@ -108,6 +138,25 @@ class ChatBIService:
             },
             "sample_rows": sample,
         }
+
+    def _compact_dashboard(self, dashboard: dict[str, Any]) -> dict[str, Any]:
+        cards: list[dict[str, Any]] = []
+        for card in dashboard.get("cards", []):
+            if card.get("type") != "chart":
+                continue
+            sql = card.get("sql") or self.dashboard_generator.chart_sql(
+                {**card, **dict(card.get("encoding") or {})}
+            )
+            cards.append(
+                {
+                    "id": card.get("id"),
+                    "title": card.get("title"),
+                    "chart_type": card.get("chart_type"),
+                    "encoding": card.get("encoding"),
+                    "sql": sql,
+                }
+            )
+        return {"dashboard_id": dashboard.get("id"), "cards": cards[:10]}
 
     def _sample_rows(self, parquet_path: Path) -> list[dict[str, Any]]:
         dataframe = pd.read_parquet(parquet_path).head(8)
@@ -120,6 +169,7 @@ class ChatBIService:
             "file_name": context["metadata"]["file_name"],
             "row_count": context["profile"]["row_count"],
             "columns": context["profile"]["columns"],
+            "session_state": context["session_state"],
             "sample_rows": context["sample_rows"],
         }
         skill = AgentSkill(
@@ -130,6 +180,8 @@ class ChatBIService:
                 "Only SELECT or WITH queries are allowed.",
                 "Use double quotes around every column name.",
                 "Use only columns listed in the dataset context.",
+                "For follow-up questions, preserve relevant filters, grouping, and chart SQL "
+                "from session_state unless the user asks to change them.",
                 "Never use read_parquet, file functions, DDL, DML, COPY, PRAGMA, INSTALL, or LOAD.",
                 "If the question cannot be answered with SQL, return an empty sql string "
                 "and explain why in reason.",
@@ -174,6 +226,7 @@ class ChatBIService:
             "file_name": context["metadata"]["file_name"],
             "profile": context["profile"],
             "analysis": context["analysis"],
+            "session_state": context["session_state"],
             "sql": sql,
             "query_rows": rows[:20],
             "query_error": query_error,
@@ -225,6 +278,8 @@ class ChatBIService:
             "file_name": context["metadata"]["file_name"],
             "row_count": context["profile"]["row_count"],
             "columns": context["profile"]["columns"],
+            "semantic_layer": context["profile"].get("semantic_layer", {}),
+            "auxiliary_columns": context["profile"].get("auxiliary_columns", []),
             "quality_issues": context["profile"]["quality_issues"],
             "insights": context["analysis"]["insights"],
             "sample_rows": context["sample_rows"][:5],
@@ -323,12 +378,4 @@ class ChatBIService:
         return suggestions
 
     def _parse_json(self, content: str) -> Any:
-        stripped = content.strip()
-        if stripped.startswith("```"):
-            stripped = re.sub(r"^```(?:json)?", "", stripped).strip()
-            stripped = re.sub(r"```$", "", stripped).strip()
-
-        match = re.search(r"\{.*\}", stripped, re.DOTALL)
-        if not match:
-            raise ValueError("LLM response did not contain JSON")
-        return json.loads(match.group(0))
+        return self.spec_repairer.parse_json_like(content)

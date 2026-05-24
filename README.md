@@ -6,8 +6,9 @@ cards automatically, proposes cleaning operations, and adds a SQLBot-style chat
 panel for follow-up analysis.
 
 The project is built around FastAPI, Vue 3, DuckDB, Parquet, ECharts, and
-OpenAI-compatible LLM providers. It is designed as a lightweight personal BI
-workspace that can run locally without a database service.
+OpenAI-compatible LLM providers, with a Tremor-inspired analytical dashboard UI.
+It is designed as a lightweight personal BI workspace that can run locally
+without a database service.
 
 ## UI Preview
 
@@ -40,6 +41,8 @@ profile summaries, quality issues, cleaning previews, and recent imports.
   with the configured LLM, with a deterministic profile-based fallback.
 - **Cleaning workflow**: preview and execute cleaning operations as a new dataset
   version.
+- **Tremor-style workspace UI**: use a dense analytical layout with clean KPI
+  cards, chart panels, data tables, and a focused ChatBI sidebar.
 - **Runtime monitoring**: inspect LLM provider configuration, online status, and
   session token usage in the UI.
 - **Local artifact storage**: keep raw files, Parquet datasets, dashboard specs,
@@ -68,7 +71,7 @@ profile summaries, quality issues, cleaning previews, and recent imports.
 | Analytical engine | DuckDB over Parquet |
 | File formats | CSV, Excel, JSON, Parquet |
 | Frontend | Vue 3, TypeScript, Vite |
-| UI and charts | Element Plus, ECharts |
+| UI and charts | Element Plus, ECharts, Tremor-inspired Vue styling |
 | LLM | OpenAI-compatible chat completions API |
 | Storage | Local filesystem artifacts under `storage/` |
 

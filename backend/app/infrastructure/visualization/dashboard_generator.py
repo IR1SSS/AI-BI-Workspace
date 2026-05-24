@@ -4,11 +4,13 @@ from uuid import uuid4
 import pandas as pd
 
 from app.infrastructure.visualization.chart_title_formatter import ChartTitleFormatter
+from app.infrastructure.visualization.echarts_spec_repair import EChartsSpecRepairer
 
 
 class DashboardGenerator:
     def __init__(self) -> None:
         self.title_formatter = ChartTitleFormatter()
+        self.spec_repairer = EChartsSpecRepairer()
 
     def generate(
         self,
@@ -62,23 +64,102 @@ class DashboardGenerator:
             data = self._chart_data(chart, dataframe)
             if not data:
                 continue
-            cards.append(
-                {
-                    "id": f"chart-{index + 1}",
-                    "type": "chart",
-                    "chart_type": chart_type,
-                    "title": self.title_formatter.title_for_chart(chart),
-                    "encoding": {
-                        "x": chart.get("x"),
-                        "y": chart.get("y"),
-                        "z": chart.get("z"),
-                        "aggregation": chart.get("aggregation"),
-                    },
-                    "layout": self._card_layout(chart, data),
-                    "data": data,
-                }
-            )
+            title = self.title_formatter.title_for_chart(chart)
+            sql = self.chart_sql(chart)
+            raw_echarts_spec = chart.get("echarts_option") or chart.get("echarts_spec")
+            card_payload = {
+                "id": f"chart-{index + 1}",
+                "type": "chart",
+                "chart_type": chart_type,
+                "title": title,
+                "encoding": {
+                    "x": chart.get("x"),
+                    "y": chart.get("y"),
+                    "z": chart.get("z"),
+                    "aggregation": chart.get("aggregation"),
+                },
+                "layout": self._card_layout(chart, data),
+                "sql": sql,
+                "data": data,
+            }
+            if raw_echarts_spec:
+                card_payload["echarts_option"] = self.spec_repairer.repair_or_fallback(
+                    raw_echarts_spec,
+                    data,
+                    title,
+                )
+            cards.append(card_payload)
         return cards
+
+    def chart_sql(self, chart: dict[str, Any]) -> str:
+        chart_type = str(chart.get("chart_type") or "")
+        x_column = chart.get("x")
+        y_column = chart.get("y")
+        z_column = chart.get("z")
+        aggregation = str(chart.get("aggregation") or "none")
+        if not x_column:
+            return ""
+
+        x = self._quote_identifier(str(x_column))
+        y = self._quote_identifier(str(y_column)) if y_column else ""
+        z = self._quote_identifier(str(z_column)) if z_column else ""
+
+        if chart_type in {"bar", "pie", "treemap", "line", "area"}:
+            if y and aggregation in {"sum", "avg", "median"}:
+                agg_expr = {
+                    "sum": f"SUM(TRY_CAST({y} AS DOUBLE))",
+                    "avg": f"AVG(TRY_CAST({y} AS DOUBLE))",
+                    "median": f"MEDIAN(TRY_CAST({y} AS DOUBLE))",
+                }[aggregation]
+                order_by = (
+                    "ORDER BY value DESC"
+                    if chart_type not in {"line", "area"}
+                    else "ORDER BY label"
+                )
+                return (
+                    f"SELECT CAST({x} AS VARCHAR) AS label, {agg_expr} AS value "
+                    f"FROM dataset WHERE {x} IS NOT NULL AND {y} IS NOT NULL "
+                    f"GROUP BY 1 {order_by} LIMIT 12"
+                )
+            return (
+                f"SELECT CAST({x} AS VARCHAR) AS label, COUNT(*) AS value "
+                f"FROM dataset WHERE {x} IS NOT NULL GROUP BY 1 ORDER BY value DESC LIMIT 12"
+            )
+
+        if chart_type == "scatter" and y:
+            return (
+                f"SELECT TRY_CAST({x} AS DOUBLE) AS x, TRY_CAST({y} AS DOUBLE) AS y "
+                f"FROM dataset WHERE {x} IS NOT NULL AND {y} IS NOT NULL LIMIT 200"
+            )
+
+        if chart_type == "heatmap" and y:
+            if z and aggregation in {"sum", "avg", "median"}:
+                agg_expr = {
+                    "sum": f"SUM(TRY_CAST({z} AS DOUBLE))",
+                    "avg": f"AVG(TRY_CAST({z} AS DOUBLE))",
+                    "median": f"MEDIAN(TRY_CAST({z} AS DOUBLE))",
+                }[aggregation]
+            else:
+                agg_expr = "COUNT(*)"
+            return (
+                f"SELECT CAST({x} AS VARCHAR) AS xLabel, CAST({y} AS VARCHAR) AS yLabel, "
+                f"{agg_expr} AS value FROM dataset "
+                f"WHERE {x} IS NOT NULL AND {y} IS NOT NULL GROUP BY 1, 2 LIMIT 144"
+            )
+
+        if chart_type == "boxplot":
+            return (
+                f"SELECT MIN(TRY_CAST({x} AS DOUBLE)) AS min, "
+                f"QUANTILE_CONT(TRY_CAST({x} AS DOUBLE), 0.25) AS q1, "
+                f"MEDIAN(TRY_CAST({x} AS DOUBLE)) AS median, "
+                f"QUANTILE_CONT(TRY_CAST({x} AS DOUBLE), 0.75) AS q3, "
+                f"MAX(TRY_CAST({x} AS DOUBLE)) AS max FROM dataset WHERE {x} IS NOT NULL"
+            )
+
+        return f"SELECT {x} FROM dataset WHERE {x} IS NOT NULL LIMIT 10000"
+
+    def _quote_identifier(self, column_name: str) -> str:
+        return '"' + column_name.replace('"', '""') + '"'
 
     def _card_layout(self, chart: dict[str, Any], data: list[dict[str, Any]]) -> dict[str, str]:
         requested = chart.get("layout")

@@ -3,16 +3,25 @@ from typing import Any
 
 import pandas as pd
 
+from app.infrastructure.profiling.semantic_layer import MicroSemanticLayerBuilder
+
 
 class ParquetProfiler:
+    def __init__(self) -> None:
+        self.semantic_layer_builder = MicroSemanticLayerBuilder()
+
     def profile(self, dataset_version_id: str, parquet_path: Path) -> dict[str, Any]:
         dataframe = pd.read_parquet(parquet_path)
         columns = [self._profile_column(dataframe, column) for column in dataframe.columns]
+        prompt_columns = self.semantic_layer_builder.compact_columns(columns)
         return {
             "dataset_version_id": dataset_version_id,
             "row_count": int(len(dataframe)),
             "column_count": int(len(dataframe.columns)),
             "columns": columns,
+            "analysis_columns": prompt_columns["analysis_columns"],
+            "auxiliary_columns": prompt_columns["auxiliary_columns"],
+            "semantic_layer": self.semantic_layer_builder.build(columns),
             "quality_issues": self._detect_quality_issues(dataframe, columns),
         }
 

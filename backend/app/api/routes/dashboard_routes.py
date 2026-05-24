@@ -6,6 +6,7 @@ from app.infrastructure.catalog.dataset_catalog import DatasetCatalog
 from app.infrastructure.jobs.job_store import JobStore
 from app.infrastructure.report.report_agent import ReportAgent
 from app.infrastructure.visualization.chart_title_formatter import ChartTitleFormatter
+from app.infrastructure.visualization.dashboard_generator import DashboardGenerator
 
 router = APIRouter(prefix="/dashboards", tags=["dashboards"])
 
@@ -75,11 +76,17 @@ def _decorate_dashboard(
     decorated["file_name"] = file_name
     decorated["title"] = f"{file_name} Dashboard Draft"
     title_formatter = ChartTitleFormatter()
-    decorated["cards"] = [
-        title_formatter.decorate_card(card)
-        for card in dashboard.get("cards", [])
-        if card.get("type") != "text"
-    ]
+    dashboard_generator = DashboardGenerator()
+    decorated["cards"] = []
+    for card in dashboard.get("cards", []):
+        if card.get("type") == "text":
+            continue
+        decorated_card = title_formatter.decorate_card(card)
+        if decorated_card.get("type") == "chart" and not decorated_card.get("sql"):
+            decorated_card["sql"] = dashboard_generator.chart_sql(
+                {**decorated_card, **dict(decorated_card.get("encoding") or {})}
+            )
+        decorated["cards"].append(decorated_card)
     decorated["report"] = report
     return decorated
 

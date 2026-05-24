@@ -103,9 +103,11 @@ export type DashboardDraft = {
     value?: number | string
     items?: Array<{ title: string; body: string }>
     chart_type?: string
-    encoding?: Record<string, string>
+    encoding?: Record<string, string | null | undefined>
     layout?: { size?: 'compact' | 'standard' | 'wide' | 'tall' | 'hero' }
     rationale?: string
+    sql?: string
+    echarts_option?: Record<string, unknown>
     data?: Array<{
       label: string
       value?: number

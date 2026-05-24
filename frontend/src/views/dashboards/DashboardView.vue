@@ -275,7 +275,7 @@ onMounted(async () => {
 .eyebrow {
   display: inline-block;
   margin-bottom: 4px;
-  color: #2357c6;
+  color: var(--tr-blue);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0;
@@ -284,40 +284,42 @@ onMounted(async () => {
 
 .dashboard-header h1 {
   margin: 0;
-  color: #142236;
-  font-size: 34px;
+  color: var(--tr-text);
+  font-size: 28px;
   line-height: 1.2;
   letter-spacing: 0;
 }
 
 .dashboard-header p {
   margin: 8px 0 0;
-  color: #5f6f82;
+  color: var(--tr-text-muted);
 }
 
 .empty-state {
   padding: 36px;
-  background: #ffffff;
-  border: 1px solid #dfe5ec;
+  background: var(--tr-surface);
+  border: 1px solid var(--tr-border);
   border-radius: 8px;
+  box-shadow: var(--tr-shadow);
 }
 
 .dashboard-workbench {
   display: grid;
   height: calc(100vh - 150px);
   min-height: 620px;
-  grid-template-columns: 280px minmax(0, 1fr) 380px;
-  background: #eef3f8;
-  border: 1px solid #d9e1ea;
+  grid-template-columns: 248px minmax(0, 1fr) 340px;
+  background: var(--tr-surface-muted);
+  border: 1px solid var(--tr-border);
   border-radius: 8px;
   overflow: hidden;
+  box-shadow: var(--tr-shadow);
 }
 
 .dataset-rail {
   padding: 14px;
   overflow-y: auto;
-  background: #ffffff;
-  border-right: 1px solid #dfe4ea;
+  background: var(--tr-surface);
+  border-right: 1px solid var(--tr-border);
   scrollbar-color: transparent transparent;
   scrollbar-width: thin;
   transition: scrollbar-color 180ms ease;
@@ -354,14 +356,14 @@ onMounted(async () => {
   align-items: center;
   justify-content: space-between;
   padding: 4px 4px 12px;
-  color: #5e6f82;
+  color: var(--tr-text-muted);
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
 }
 
 .rail-header b {
-  color: #142236;
+  color: var(--tr-text);
   font-size: 13px;
 }
 
@@ -372,17 +374,17 @@ onMounted(async () => {
   gap: 8px;
   padding: 12px;
   margin-bottom: 8px;
-  background: #f8fafc;
-  border: 1px solid #e3e8ee;
+  background: var(--tr-surface);
+  border: 1px solid var(--tr-border);
   border-radius: 8px;
   transition: background 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
 }
 
 .dataset-item:hover,
 .dataset-item.active {
-  background: #eef5ff;
-  border-color: #9bb9f4;
-  box-shadow: 0 8px 20px rgba(35, 87, 198, 0.1);
+  background: var(--tr-blue-soft);
+  border-color: #bfdbfe;
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.08);
 }
 
 .dataset-select {
@@ -390,7 +392,7 @@ onMounted(async () => {
   width: 100%;
   gap: 8px;
   padding: 0 32px 0 0;
-  color: #263648;
+  color: var(--tr-text);
   text-align: left;
   cursor: pointer;
   background: transparent;
@@ -407,7 +409,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #66778a;
+  color: var(--tr-text-muted);
   font-size: 12px;
 }
 
@@ -426,7 +428,7 @@ onMounted(async () => {
   width: 30px;
   height: 30px;
   padding: 0;
-  color: #7a8795;
+  color: var(--tr-text-soft);
   cursor: pointer;
   pointer-events: none;
   background: transparent;
@@ -451,8 +453,8 @@ onMounted(async () => {
 }
 
 .clear-chat:hover {
-  color: #2357c6;
-  background: #edf5ff;
+  color: var(--tr-blue);
+  background: var(--tr-blue-soft);
   border-color: #c8dcfa;
 }
 
@@ -488,14 +490,14 @@ onMounted(async () => {
 
 .stage-toolbar h2 {
   margin: 0;
-  color: #142236;
+  color: var(--tr-text);
   font-size: 21px;
   line-height: 1.3;
 }
 
 .stage-toolbar p {
   margin: 7px 0 0;
-  color: #607184;
+  color: var(--tr-text-muted);
 }
 
 .stage-stats {
@@ -507,9 +509,9 @@ onMounted(async () => {
 
 .stage-stats span {
   padding: 6px 9px;
-  color: #25384c;
-  background: #ffffff;
-  border: 1px solid #dfe5ec;
+  color: var(--tr-text);
+  background: var(--tr-surface);
+  border: 1px solid var(--tr-border);
   border-radius: 8px;
   font-size: 12px;
   font-weight: 700;
@@ -520,8 +522,8 @@ onMounted(async () => {
   padding: 6px 12px;
   color: #ffffff;
   cursor: pointer;
-  background: #2357c6;
-  border: 1px solid #2357c6;
+  background: var(--tr-blue);
+  border: 1px solid var(--tr-blue);
   border-radius: 8px;
   font-size: 12px;
   font-weight: 800;
@@ -537,20 +539,21 @@ onMounted(async () => {
   gap: 14px;
   margin-bottom: 16px;
   padding: 16px;
-  background: #ffffff;
-  border: 1px solid #dfe5ec;
+  background: var(--tr-surface);
+  border: 1px solid var(--tr-border);
   border-radius: 8px;
+  box-shadow: var(--tr-shadow);
 }
 
 .report-panel h3 {
   margin: 4px 0 8px;
-  color: #142236;
+  color: var(--tr-text);
   font-size: 18px;
 }
 
 .report-panel p {
   margin: 0;
-  color: #526376;
+  color: var(--tr-text-muted);
   line-height: 1.6;
   white-space: pre-wrap;
 }
@@ -563,12 +566,12 @@ onMounted(async () => {
 
 .report-sections article {
   padding-top: 10px;
-  border-top: 1px solid #e5ebf1;
+  border-top: 1px solid var(--tr-border);
 }
 
 .report-sections h4 {
   margin: 0 0 6px;
-  color: #172433;
+  color: var(--tr-text);
   font-size: 14px;
 }
 
@@ -583,9 +586,9 @@ onMounted(async () => {
 
 .next-actions li {
   padding: 6px 9px;
-  color: #22436f;
-  background: #edf5ff;
-  border: 1px solid #d5e6fb;
+  color: #1d4ed8;
+  background: var(--tr-blue-soft);
+  border: 1px solid #bfdbfe;
   border-radius: 8px;
   font-size: 12px;
   font-weight: 700;
@@ -593,8 +596,8 @@ onMounted(async () => {
 
 .metric-strip {
   display: grid;
-  grid-template-columns: repeat(3, minmax(96px, 138px));
-  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
   align-items: stretch;
   margin-bottom: 12px;
 }
@@ -605,23 +608,32 @@ onMounted(async () => {
   grid-auto-rows: minmax(238px, auto);
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
-  padding: 12px;
-  background: #ffffff;
-  border: 1px solid #e7edf4;
-  border-radius: 8px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 code {
   padding: 2px 5px;
-  color: #1f3657;
-  background: #e9f0fb;
+  color: #1d4ed8;
+  background: var(--tr-blue-soft);
   border-radius: 4px;
 }
 
 @media (max-width: 1380px) {
   .dashboard-workbench {
-    grid-template-columns: 248px minmax(0, 1fr) 340px;
+    grid-template-columns: 220px minmax(0, 1fr) 320px;
+  }
+
+  .visual-board {
+    grid-template-columns: 1fr;
+  }
+
+  :deep(.dashboard-card.chart.size-wide),
+  :deep(.dashboard-card.chart.size-hero) {
+    grid-column: span 1;
   }
 }
 
